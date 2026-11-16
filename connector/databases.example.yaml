@@ -1,0 +1,48 @@
+# Bancos que este conector atende. Senhas nunca ficam aqui: cada banco aponta
+# a variável de ambiente que guarda a senha (password_env).
+#
+# ESTACK_URL e ESTACK_CONNECTOR_TOKEN vêm de variáveis de ambiente.
+
+databases:
+  - alias: erp
+    engine: db2i              # Db2 for i (AS400), via Mapepire
+    host: as400.empresa.local
+    port: 8076                # porta do Mapepire
+    username: ESTACKRO        # perfil sem autoridades especiais, *USE nas bibliotecas
+    password_env: ERP_PASSWORD
+    ssl_mode: require         # require: TLS com certificado autoassinado
+    schemas: [VENDAS, ESTOQUE] # bibliotecas liberadas; vazio usa a lista do perfil
+    # options:
+    #   ca_file: /config/as400-ca.pem   # com ssl_mode verify-ca ou verify-full
+
+  - alias: financeiro
+    engine: oracle
+    host: oracle.empresa.local
+    port: 1521
+    database: ORCLPDB1          # service name
+    username: ESTACK_RO         # CREATE SESSION + SELECT nas tabelas; DEBUG nos packages
+    password_env: FIN_PASSWORD
+    ssl_mode: disable           # TCP dentro da rede; require/verify-* usam TCPS
+    schemas: [FIN]              # owners liberados
+
+  - alias: vendas
+    engine: sqlserver
+    host: sql.empresa.local
+    port: 1433
+    database: Vendas            # nome do banco
+    username: estack_ro         # SELECT e VIEW DEFINITION nos schemas liberados
+    password_env: VENDAS_PASSWORD
+    ssl_mode: verify-ca         # TLS validando o certificado
+    schemas: [dbo]
+    options:
+      ca_file: /config/sql-ca.pem   # CA interna; omita se o certificado for de CA pública
+
+  - alias: portal
+    engine: postgres
+    host: 10.0.0.15
+    port: 5432
+    database: portal
+    username: estack_reader   # GRANT pg_read_all_data
+    password_env: PORTAL_PASSWORD
+    ssl_mode: require
+    schemas: [public]

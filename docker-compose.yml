@@ -1,0 +1,96 @@
+services:
+  # ---------------------------------------------
+  # 1. Banco de Dados Microsoft SQL Server
+  # ---------------------------------------------
+  database:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    container_name: estack-sqlserver
+    hostname: sqlserver
+    user: mssql
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-ojTqd69652RQ}
+      MSSQL_RPC_PORT: "135"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\" -C || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\" || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # ---------------------------------------------
+  # 2. Backend (FastAPI + Alembic + Agentes)
+  # ---------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: estack-backend
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app:/app/src
+      - ESTACK_DB_CONNECTION_STRING=mssql+pymssql://sa:${MSSQL_SA_PASSWORD:-ojTqd69652RQ}@database:1433/${MSSQL_DATABASE:-estack_db}
+      - ESTACK_FRONT_HOST=http://localhost:3000
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - DEFAULT_MODEL=openai:gpt-4o
+      - LOGFIRE_TOKEN=${LOGFIRE_TOKEN:-local}
+      - SECRET_HASH_KEY=${SECRET_HASH_KEY:-sua_chave_secreta_local_12345}
+      - ESTACK_ENVIRONMENT=local
+      - ESTACK_AUTH_BYPASS_LOCAL=true
+      - EMAIL_USER=${EMAIL_USER:-user@example.com}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD:-password}
+      - EMAIL_HOST=${EMAIL_HOST:-smtp.example.com}
+      - ESTACK_OPENAI_API_KEY=${ESTACK_OPENAI_API_KEY:-}
+      - ESTACK_GOOGLE_API_KEY=${ESTACK_GOOGLE_API_KEY:-}
+      - ESTACK_ANTHROPIC_API_KEY=${ESTACK_ANTHROPIC_API_KEY:-}
+      - ESTACK_DEVIN_API_KEY=${ESTACK_DEVIN_API_KEY:-}
+      - GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN:-}
+      # Carga Inicial do Banco de Dados
+      - SEED_ADMIN_EMAIL=${SEED_ADMIN_EMAIL:-}
+      - SEED_DEFAULT_ORG=${SEED_DEFAULT_ORG:-}
+      - SEED_DEFAULT_PROJECT=${SEED_DEFAULT_PROJECT:-Default Project}
+      # Diretório de trabalho dos agentes
+      - OPENHANDS_WORKSPACE_ROOT=/workspace/estack_agents
+    volumes:
+      # Sincronização em tempo real do código backend e migrações para desenvolvimento
+      - ./src:/app/src
+      - ./alembic:/app/alembic
+      # 🎯 VOLUME PARA OS AGENTES TRABALHAREM NO CÓDIGO FONTE ALVO
+      - ${TARGET_PROJECT_DIR:-./projects_to_analyze}:/workspace/target_project
+      - estack_agent_workspace:/workspace/estack_agents
+
+  # ---------------------------------------------
+  # 3. Frontend
+  # ---------------------------------------------
+  frontend:
+    build:
+      context: ../estack-frontend
+      dockerfile: Dockerfile
+    container_name: estack-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_ENABLE_LOCAL_LOGIN=true
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    volumes:
+      - ../estack-frontend:/app
+      - /app/node_modules
+
+volumes:
+  sqlserver_data:
+  estack_agent_workspace:

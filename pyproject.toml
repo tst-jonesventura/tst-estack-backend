@@ -1,0 +1,58 @@
+[tool.uv]
+package = true
+no-binary-package = ["estack-backend", "func-timeout"]
+[project]
+name = "estack-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = "==3.12.*"
+dependencies = [
+    "alembic>=1.17.1",
+    "autoflake>=2.3.1",
+    "black>=25.9.0",
+    "coverage>=7.15.4",
+    "cryptography>=46.0.3",
+    "fastapi[standard]>=0.116.1",
+    "google-genai>=1.33.0",
+    "gunicorn>=23.0.0",
+    "httpx>=0.28.1",
+    "ipykernel>=7.1.0",
+    "isort>=6.0.1",
+    "langchain>=0.3.27",
+    "langchain-google-genai>=2.1.10",
+    "langchain-openai>=0.3.32",
+    "logfire>=4.16.0",
+    "mcp>=1.29.0",
+    "motor>=3.7.1",
+    "nest-asyncio>=1.6.0",
+    "newrelic>=13.0.1",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.44.0,<1.45",
+    "openhands-sdk>=1.41.0",
+    "openhands-tools>=1.41.0",
+    "psycopg2-binary>=2.9.10",
+    "pydantic>=2.11.7",
+    "pydantic-ai>=2.23.0",
+    "pydantic-settings>=2.10.1",
+    "pyjwt>=2.10.1",
+    "pymongo>=4.14.1",
+    "pymssql>=2.3.7",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.1.0",
+    "python-dotenv>=1.1.1",
+    "pytz>=2025.2",
+    "requests>=2.32.5",
+    "ruff>=0.14.11",
+    "sqlalchemy>=2.0.43",
+    "sqlalchemy-continuum>=1.5.2",
+    "sqlmodel>=0.0.24",
+    "uvicorn[standard]>=0.35.0",
+    "vulture>=2.14",
+    "websockets>=15.0.1",
+    "mapepire-python==1.0.0",
+    "oracledb>=3",
+    "python-tds>=1.17",
+    "pyopenssl>=25",
+    "certifi>=2026.7.22",
+]
+
